@@ -57,6 +57,16 @@ const setDefaultFont = function (ctx) {
   ctx.fillStyle = TEXT_COLOR;
 };
 
+const drawInfo = function (ctx, text, x, y) {
+  ctx.fillStyle = TEXT_COLOR;
+  ctx.fillText(text, x, y);
+};
+
+const drawBarForPlayer = function (ctx, player, x, y, height) {
+  ctx.fillStyle = getColorByPlayer(player);
+  ctx.fillRect(x, y, BAR_WIDTH, height);
+};
+
 window.renderStatistics = function (ctx, players, times) {
   // Показывает облако с тенью
   renderCloud(ctx, CLOUD_X + GAP, CLOUD_Y + GAP, CLOUD_SHADOW);
@@ -72,36 +82,24 @@ window.renderStatistics = function (ctx, players, times) {
   );
 
   const maxTime = getMaxElement(times);
+  const barBottom = CLOUD_Y + CLOUD_HEIGHT;
 
   // Рисуем статистику в виде гистограммы
   for (let i = 0; i < players.length; i++) {
-    const currentBarHeight = (BAR_HEIGHT * times[i]) / maxTime;
     const currentTime = Math.round(times[i]);
     const currentBarX = CLOUD_X + GAP + 2 * TEXT_GAP + i * (BAR_WIDTH + BAR_GAP);
+    const currentBarHeight = (BAR_HEIGHT * times[i]) / maxTime;
+    const currentBarY = barBottom - 2.5 * TEXT_GAP - currentBarHeight;
+    const currentPointTextY = barBottom - 3.5 * TEXT_GAP - currentBarHeight;
+    const currentPlayerTextY = barBottom - 2 * TEXT_GAP;
 
     // Показываем время игрока над столбиком
-    ctx.fillStyle = TEXT_COLOR;
-    ctx.fillText(
-        `${currentTime}`,
-        currentBarX,
-        CLOUD_Y + CLOUD_HEIGHT - currentBarHeight - 3.5 * TEXT_GAP
-    );
+    drawInfo(ctx, currentTime, currentBarX, currentPointTextY);
 
     // Рисуем столбик
-    ctx.fillStyle = getColorByPlayer(players[i]);
-    ctx.fillRect(
-        currentBarX,
-        CLOUD_Y + CLOUD_HEIGHT - 2.5 * TEXT_GAP - currentBarHeight,
-        BAR_WIDTH,
-        currentBarHeight
-    );
+    drawBarForPlayer(ctx, players[i], currentBarX, currentBarY, currentBarHeight);
 
     // Показываем имя игрока под столбиком
-    ctx.fillStyle = TEXT_COLOR;
-    ctx.fillText(
-        `${players[i]}`,
-        currentBarX,
-        CLOUD_Y + CLOUD_HEIGHT - 2 * TEXT_GAP
-    );
+    drawInfo(ctx, players[i], currentBarX, currentPlayerTextY);
   }
 };
