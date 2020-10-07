@@ -1,4 +1,5 @@
 'use strict';
+
 (function () {
   const ORIGIN_TOP_POSITION = `80px`;
   const ORIGIN_LEFT_POSITION = `50%`;
