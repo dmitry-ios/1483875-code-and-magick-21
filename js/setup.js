@@ -1,48 +1,61 @@
 'use strict';
 
 (function () {
-  const NUMBER_OF_WIZRDS = 4;
-
   const userDialog = document.querySelector(`.setup`);
   const form = userDialog.querySelector(`.setup-wizard-form`);
 
-  const renderWizard = function (wizard, templateItem) {
-    const wizardElement = templateItem.cloneNode(true);
+  let coatColor = `rgb(101, 137, 164)`;
+  let eyesColor = `black`;
+  let wizards = [];
 
-    wizardElement.querySelector(`.setup-similar-label`).textContent = wizard.name;
-    wizardElement.querySelector(`.wizard-coat`).style.fill = wizard.colorCoat;
-    wizardElement.querySelector(`.wizard-eyes`).style.fill = wizard.colorEyes;
+  const getRank = function (wizard) {
+    let rank = 0;
 
-    return wizardElement;
-  };
-
-  const makeFragmetWizards = function (elements) {
-    const similarWizardTemplate = document.querySelector(`#similar-wizard-template`);
-    const similarWizardItem = similarWizardTemplate.content.querySelector(`.setup-similar-item`);
-    const fragment = document.createDocumentFragment();
-    const length = Math.min(NUMBER_OF_WIZRDS, elements.length);
-
-    for (let i = 0; i < length; i++) {
-      const wizardElement = renderWizard(elements[i], similarWizardItem);
-
-      fragment.appendChild(wizardElement);
+    if (wizard.colorCoat === coatColor) {
+      rank += 2;
+    }
+    if (wizard.colorEyes === eyesColor) {
+      rank += 1;
     }
 
-    return fragment;
+    return rank;
   };
 
-  const setupWizardDialog = function (wizards) {
-    const fragmentWithWizards = makeFragmetWizards(wizards);
-    const similarListElement = userDialog.querySelector(`.setup-similar-list`);
-
-    similarListElement.appendChild(fragmentWithWizards);
-
-    userDialog.querySelector(`.setup-similar`).classList.remove(`hidden`);
+  const namesComparator = function (left, right) {
+    if (left > right) {
+      return 1;
+    } else if (left < right) {
+      return -1;
+    } else {
+      return 0;
+    }
   };
+
+  const updateWizards = function () {
+    const uniqueWizards = wizards.sort(function (left, right) {
+      let rankDiff = getRank(right) - getRank(left);
+      if (rankDiff === 0) {
+        rankDiff = namesComparator(left.name, right.name);
+      }
+      return rankDiff;
+    });
+
+    window.render.setupSimilarList(uniqueWizards);
+  };
+
+  window.wizard.setEyesChangeHandler(window.debounce(function (color) {
+    eyesColor = color;
+    updateWizards();
+  }));
+
+  window.wizard.setCoatChangeHandler(window.debounce(function (color) {
+    coatColor = color;
+    updateWizards();
+  }));
 
   const successLoadHandler = function (jsonData) {
-    window.util.shuffleArray(jsonData);
-    setupWizardDialog(jsonData);
+    wizards = jsonData;
+    updateWizards();
   };
 
   const successSaveHandler = function () {
@@ -50,19 +63,7 @@
   };
 
   const errorHandler = function (errorMessage) {
-    const node = document.createElement(`div`);
-
-    node.style = `z-index: 100; margin: 0 auto; text-align: center; background-color: red;`;
-    node.style.position = `absolute`;
-    node.style.left = 0;
-    node.style.right = 0;
-    node.style.fontSize = `30px`;
-
-    node.textContent = errorMessage;
-
-    window.scrollTo(0, 0);
-
-    document.body.insertAdjacentElement(`afterbegin`, node);
+    window.util.createErrorMessage(errorMessage);
   };
 
   const onFormSubmit = function (evt) {
