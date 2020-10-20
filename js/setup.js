@@ -1,80 +1,79 @@
 'use strict';
 
-(function () {
-  const userDialog = document.querySelector(`.setup`);
-  const form = userDialog.querySelector(`.setup-wizard-form`);
+const userDialog = document.querySelector(`.setup`);
+const form = userDialog.querySelector(`.setup-wizard-form`);
 
-  let coatColor = `rgb(101, 137, 164)`;
-  let eyesColor = `black`;
-  let wizards = [];
+let coatColor = `rgb(101, 137, 164)`;
+let eyesColor = `black`;
+let wizards = [];
 
-  const getRank = function (wizard) {
-    let rank = 0;
+const getRank = function (wizard) {
+  let rank = 0;
 
-    if (wizard.colorCoat === coatColor) {
-      rank += 2;
+  if (wizard.colorCoat === coatColor) {
+    rank += 2;
+  }
+  if (wizard.colorEyes === eyesColor) {
+    rank += 1;
+  }
+
+  return rank;
+};
+
+const namesComparator = function (left, right) {
+  if (left > right) {
+    return 1;
+  } else if (left < right) {
+    return -1;
+  } else {
+    return 0;
+  }
+};
+
+const updateWizards = function () {
+  const uniqueWizards = wizards.sort(function (left, right) {
+    let rankDiff = getRank(right) - getRank(left);
+    if (rankDiff === 0) {
+      rankDiff = namesComparator(left.name, right.name);
     }
-    if (wizard.colorEyes === eyesColor) {
-      rank += 1;
-    }
+    return rankDiff;
+  });
 
-    return rank;
-  };
+  window.render.setupSimilarList(uniqueWizards);
+};
 
-  const namesComparator = function (left, right) {
-    if (left > right) {
-      return 1;
-    } else if (left < right) {
-      return -1;
-    } else {
-      return 0;
-    }
-  };
+window.wizard.setEyesChangeHandler(window.debounce(function (color) {
+  eyesColor = color;
+  updateWizards();
+}));
 
-  const updateWizards = function () {
-    const uniqueWizards = wizards.sort(function (left, right) {
-      let rankDiff = getRank(right) - getRank(left);
-      if (rankDiff === 0) {
-        rankDiff = namesComparator(left.name, right.name);
-      }
-      return rankDiff;
-    });
+window.wizard.setCoatChangeHandler(window.debounce(function (color) {
+  coatColor = color;
+  updateWizards();
+}));
 
-    window.render.setupSimilarList(uniqueWizards);
-  };
+const successLoadHandler = function (jsonData) {
+  wizards = jsonData;
+  updateWizards();
+};
 
-  window.wizard.setEyesChangeHandler(window.debounce(function (color) {
-    eyesColor = color;
-    updateWizards();
-  }));
+const successSaveHandler = function () {
+  userDialog.classList.add(`hidden`);
+};
 
-  window.wizard.setCoatChangeHandler(window.debounce(function (color) {
-    coatColor = color;
-    updateWizards();
-  }));
+const errorHandler = function (errorMessage) {
+  window.util.createErrorMessage(errorMessage);
+};
 
-  const successLoadHandler = function (jsonData) {
-    wizards = jsonData;
-    updateWizards();
-  };
+const onFormSubmit = function (evt) {
+  const data = new FormData(form);
 
-  const successSaveHandler = function () {
-    userDialog.classList.add(`hidden`);
-  };
+  window.backend.save(data, successSaveHandler, errorHandler);
 
-  const errorHandler = function (errorMessage) {
-    window.util.createErrorMessage(errorMessage);
-  };
+  evt.preventDefault();
+};
 
-  const onFormSubmit = function (evt) {
-    const data = new FormData(form);
+window.backend.load(successLoadHandler, errorHandler);
 
-    window.backend.save(data, successSaveHandler, errorHandler);
+form.addEventListener(`submit`, onFormSubmit);
 
-    evt.preventDefault();
-  };
-
-  window.backend.load(successLoadHandler, errorHandler);
-
-  form.addEventListener(`submit`, onFormSubmit);
-})();
