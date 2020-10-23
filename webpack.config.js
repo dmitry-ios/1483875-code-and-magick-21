@@ -12,6 +12,7 @@ module.exports = {
     "./js/setup.js",
     "./js/dialog.js",
     "./js/validation.js",
+    "./js/avatar.js",
     "./js/stat.js",
     "./js/game.js"
   ],
